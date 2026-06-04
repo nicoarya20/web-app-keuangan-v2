@@ -1,7 +1,8 @@
 # Task: Merge ARCHITECTURE.md
 
 ## Status
-- [ ] Merge content into `.gemini/ARCHITECTURE.md`
-- [ ] Delete root `ARCHITECTURE.md`
-- [ ] Update `package.json` version
-- [ ] Push to GitHub
+- [x] Merge content into `.gemini/ARCHITECTURE.md`
+- [x] Delete root `ARCHITECTURE.md`
+- [x] Update `package.json` version
+- [x] Push to GitHub
+

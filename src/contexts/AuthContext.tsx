@@ -25,27 +25,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        try {
-          // Sync with our backend
-          const idToken = session.access_token;
-          const email = session.user.email || '';
-          const name = session.user.user_metadata.full_name || session.user.user_metadata.name || email.split('@')[0];
-          
-          const data: any = await api.loginWithGoogle(idToken, email, name);
-          localStorage.setItem('token', data.token);
-          setUser(data.user);
-        } catch (error) {
-          console.error('Google sync failed:', error);
-        }
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   async function checkAuth() {

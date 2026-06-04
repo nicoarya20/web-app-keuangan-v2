@@ -159,10 +159,24 @@ app.post("/make-server-5c8e519d/auth/login", async (c) => {
 app.post("/make-server-5c8e519d/auth/google", async (c) => {
   try {
     const body = await c.req.json();
-    const { email, name, idToken } = body;
+    const { email: clientEmail, name: clientName, idToken } = body;
+
+    if (!idToken) {
+      return c.json({ error: "idToken is required" }, 400);
+    }
+
+    // Verify token with Google
+    const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+    if (!verifyRes.ok) {
+      return c.json({ error: "Invalid Google token" }, 401);
+    }
+
+    const googleUser = await verifyRes.json();
+    const email = googleUser.email;
+    const name = googleUser.name || clientName || email.split('@')[0];
 
     if (!email) {
-      return c.json({ error: "Email is required" }, 400);
+      return c.json({ error: "Email not found in Google token" }, 400);
     }
 
     // Check if user exists
@@ -174,7 +188,7 @@ app.post("/make-server-5c8e519d/auth/google", async (c) => {
       user = {
         id: userId,
         email,
-        name: name || email.split('@')[0],
+        name,
         provider: 'google',
         createdAt: new Date().toISOString(),
       };

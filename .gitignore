@@ -27,3 +27,4 @@ dist-ssr
 
 # Supabase
 .supabase/functions/.env
+.env

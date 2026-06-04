@@ -8,32 +8,6 @@ import { create as createJWT, verify as verifyJWT } from "npm:djwt@3.0.2";
 
 const app = new Hono();
 
-// Dev Inspector endpoint
-app.post("/__open-in-editor", async (c) => {
-  try {
-    const { relativePath, lineNumber, columnNumber } = await c.req.json();
-    const file = `${Deno.cwd()}/${relativePath}`;
-    // You can set REACT_EDITOR in your environment variables, defaults to 'code' (VS Code)
-    const editor = Deno.env.get("REACT_EDITOR") || "code";
-    const loc = `${file}:${lineNumber}:${columnNumber}`;
-    const args = editor === "subl" ? [loc] : ["--goto", loc];
-    
-    console.log(`[inspector] Opening ${editor} -> ${loc}`);
-    
-    const command = new Deno.Command(editor, {
-      args,
-      stdout: "null",
-      stderr: "null",
-    });
-    command.spawn();
-    
-    return c.json({ success: true });
-  } catch (error) {
-    console.error("[inspector] Error opening editor:", error);
-    return c.json({ error: "Failed to open editor" }, 500);
-  }
-});
-
 // JWT Secret Key
 const JWT_SECRET = await crypto.subtle.generateKey(
   { name: "HMAC", hash: "SHA-256" },

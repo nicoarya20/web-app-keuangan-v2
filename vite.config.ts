@@ -9,6 +9,42 @@ function inspectorPlugin(): any {
   return {
     name: 'inspector-inject',
     enforce: 'pre',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (req.url === '/__open-in-editor' && req.method === 'POST') {
+          let body = ''
+          req.on('data', chunk => { body += chunk })
+          req.on('end', async () => {
+            try {
+              const { relativePath, lineNumber, columnNumber } = JSON.parse(body)
+              const file = path.join(rootDir, relativePath)
+              const editor = process.env.REACT_EDITOR || 'code'
+              const loc = `${file}:${lineNumber}:${columnNumber}`
+              const args = editor === 'subl' ? [loc] : ['--goto', loc]
+              
+              console.log(`[inspector] Opening ${editor} -> ${loc}`)
+              
+              const isBun = typeof (globalThis as any).Bun !== 'undefined'
+              if (isBun) {
+                (globalThis as any).Bun.spawn([editor, ...args], { stdio: ['ignore', 'ignore', 'ignore'] })
+              } else {
+                const { spawn } = await import('node:child_process')
+                spawn(editor, args, { detached: true, stdio: 'ignore' }).unref()
+              }
+              
+              res.statusCode = 200
+              res.end(JSON.stringify({ success: true }))
+            } catch (err) {
+              console.error('[inspector] Error opening editor:', err)
+              res.statusCode = 500
+              res.end(JSON.stringify({ error: 'Failed to open editor' }))
+            }
+          })
+        } else {
+          next()
+        }
+      })
+    },
     transform(code: string, id: string) {
       // Hanya .tsx/.jsx, skip node_modules
       if (!/\.[jt]sx(\?|$)/.test(id) || id.includes('node_modules')) return null

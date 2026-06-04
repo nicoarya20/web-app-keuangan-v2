@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api } from '../utils/api';
+import { supabase } from '../utils/supabase';
 
 interface User {
   id: string;
@@ -11,6 +12,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (idToken: string, email: string, name: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
 }
@@ -23,6 +25,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        try {
+          // Sync with our backend
+          const idToken = session.access_token;
+          const email = session.user.email || '';
+          const name = session.user.user_metadata.full_name || session.user.user_metadata.name || email.split('@')[0];
+          
+          const data: any = await api.loginWithGoogle(idToken, email, name);
+          localStorage.setItem('token', data.token);
+          setUser(data.user);
+        } catch (error) {
+          console.error('Google sync failed:', error);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function checkAuth() {
@@ -46,6 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   }
 
+  async function loginWithGoogle(idToken: string, email: string, name: string) {
+    const data: any = await api.loginWithGoogle(idToken, email, name);
+    localStorage.setItem('token', data.token);
+    setUser(data.user);
+  }
+
   async function register(email: string, password: string, name: string) {
     const data: any = await api.register(email, password, name);
     localStorage.setItem('token', data.token);
@@ -58,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

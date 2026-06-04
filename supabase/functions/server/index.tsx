@@ -155,6 +155,51 @@ app.post("/make-server-5c8e519d/auth/login", async (c) => {
   }
 });
 
+// Google Login/Sync
+app.post("/make-server-5c8e519d/auth/google", async (c) => {
+  try {
+    const body = await c.req.json();
+    const { email, name, idToken } = body;
+
+    if (!email) {
+      return c.json({ error: "Email is required" }, 400);
+    }
+
+    // Check if user exists
+    let user = await kv.get(`user:${email}`);
+    
+    if (!user) {
+      // Create new user for Google login
+      const userId = generateId();
+      user = {
+        id: userId,
+        email,
+        name: name || email.split('@')[0],
+        provider: 'google',
+        createdAt: new Date().toISOString(),
+      };
+
+      await kv.set(`user:${email}`, user);
+      await kv.set(`userId:${userId}`, email);
+    }
+
+    // Create our custom JWT token
+    const token = await createJWT(
+      { alg: "HS256", typ: "JWT" },
+      { userId: user.id, email: user.email, exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 7) },
+      JWT_SECRET
+    );
+
+    return c.json({
+      token,
+      user: { id: user.id, email: user.email, name: user.name },
+    });
+  } catch (error) {
+    console.log("Google auth error:", error);
+    return c.json({ error: "Google authentication failed" }, 500);
+  }
+});
+
 // Get current user
 app.get("/make-server-5c8e519d/auth/me", async (c) => {
   try {

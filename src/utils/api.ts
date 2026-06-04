@@ -63,6 +63,13 @@ class ApiClient {
     });
   }
 
+  async loginWithGoogle(idToken: string, email: string, name: string) {
+    return this.request('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken, email, name }),
+    });
+  }
+
   async getCurrentUser() {
     return this.request('/auth/me', {}, true);
   }

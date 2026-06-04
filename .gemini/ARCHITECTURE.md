@@ -1,5 +1,11 @@
 # Architecture
 
+## 🛠 Tech Stack
+- **Frontend**: React 18, Vite, Tailwind CSS 4, Radix UI.
+- **Backend**: Supabase (PostgreSQL, Edge Functions, Auth).
+- **Icons & Motion**: Lucide React, Framer Motion.
+- **Charts**: Recharts.
+
 ## System Overview
 MoneyFlow follows a classic Client-Server architecture where the frontend communicates with a backend-as-a-service (Supabase).
 
@@ -10,6 +16,18 @@ graph TD
     Client --> Auth[Supabase Auth]
     Client --> Storage[Supabase Storage]
 ```
+
+## 📂 Directory Structure
+- `src/`: Frontend source code.
+  - `app/`: Main application logic.
+    - `pages/`: Route-level components.
+    - `components/`: UI and layout building blocks.
+    - `routes.tsx`: Navigation configuration.
+  - `contexts/`: Global state (Auth).
+  - `utils/`: Helpers and API client.
+- `supabase/`: Backend logic and configurations.
+  - `functions/`: Edge functions (Deno/TypeScript).
+- `public/`: Static assets.
 
 ## Frontend Structure
 The application is organized into a modular structure under `src/app/`:
